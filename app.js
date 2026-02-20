@@ -1193,23 +1193,23 @@ function doPrint() {
         `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`);
       svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     }
-    injectPageStyleAndPrint(size, orient);
-  } else {
-    injectPageStyleAndPrint(size, orient);
   }
-}
 
-function injectPageStyleAndPrint(size, orient) {
-  // Inject a dynamic @page rule
+  // Inject @page size rule + temporarily change document.title for PDF metadata
+  const origTitle = document.title;
+  const rootName = currentHierarchy.name || 'Organigramme';
+  document.title = 'Organigramme \u2014 ' + rootName;
+
   const style = document.createElement('style');
   style.id = 'print-page-style';
-  style.textContent = `@page { size: ${size} ${orient}; margin: 10mm; }`;
+  style.textContent = `@page { size: ${size} ${orient}; }`;
   document.head.appendChild(style);
 
   window.print();
 
   // Cleanup after print dialog
   setTimeout(() => {
+    document.title = origTitle;
     const el = document.getElementById('print-page-style');
     if (el) el.remove();
   }, 1000);

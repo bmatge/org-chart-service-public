@@ -549,6 +549,10 @@ body {
 
 /* ── Print ── */
 @media print {
+  /* Suppress browser-generated headers/footers (URL, page title, date)
+     by removing @page margins — we use body padding instead */
+  @page { margin: 0; }
+
   /* Hide everything except the chart */
   .fr-header,
   .sidebar,
@@ -562,6 +566,7 @@ body {
   body {
     height: auto;
     overflow: visible;
+    padding: 8mm;
   }
 
   .app-body {
