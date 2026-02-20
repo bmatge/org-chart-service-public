@@ -1079,6 +1079,8 @@ function doExport(format) {
     const keys = Object.keys(rows[0] || {});
     const csv = [keys.join(';'), ...rows.map(r => keys.map(k => `"${(r[k] || '').toString().replace(/"/g, '""')}"`).join(';'))].join('\n');
     dlBlob(csv, 'organigramme.csv', 'text/csv;charset=utf-8;');
+  } else if (format === 'html') {
+    doExportHTML();
   } else if (format === 'png') {
     if (d3c) d3c.exportImg({ full: true, scale: 2, backgroundColor: '#fff' });
     else alert('Export PNG uniquement en mode D3.');
@@ -1088,27 +1090,110 @@ function doExport(format) {
   }
 }
 
+function doExportHTML() {
+  const title = esc(currentHierarchy.name || 'Organigramme');
+  const now = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const meta = `${countNodes(currentHierarchy)} noeuds, ${maxTreeDepth(currentHierarchy) + 1} niveaux`;
+
+  let bodyContent;
+
+  if (d3c) {
+    // D3 mode: clone the current SVG (preserves collapsed/expanded state)
+    const svgOrig = document.querySelector('#d3-wrap svg');
+    if (!svgOrig) { alert('Aucun SVG trouvé.'); return; }
+    const svg = svgOrig.cloneNode(true);
+    // Set viewBox to fit all content
+    const bbox = svgOrig.getBBox();
+    const pad = 30;
+    svg.setAttribute('viewBox', `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`);
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.style.maxHeight = '100vh';
+    // Remove event listeners / interactive attributes
+    svg.querySelectorAll('[cursor]').forEach(el => el.removeAttribute('cursor'));
+    bodyContent = svg.outerHTML;
+  } else {
+    // HTML mode: render tree
+    const tmp = document.createElement('div');
+    tmp.appendChild(renderNode(currentHierarchy));
+    bodyContent = `<div class="orga-tree">${tmp.innerHTML}</div>`;
+  }
+
+  const htmlCssMode = `
+.orga-tree{display:flex;flex-direction:column;align-items:center;padding-bottom:2rem;min-width:fit-content}
+.org-node{display:inline-flex;flex-direction:column;align-items:center}
+.org-children-row{display:flex;align-items:flex-start;justify-content:center;gap:20px;position:relative;padding-top:32px}
+.node-vline{width:2px;height:32px;background:#ddd;flex-shrink:0}
+.orgc-card{background:#fff;border-left:4px solid #000091;box-shadow:0 2px 6px 0 rgba(0,0,18,.16);padding:.75rem 1rem;min-width:180px;max-width:260px;text-align:left}
+.orgc-card--root{background:#000091;border-left-color:rgba(255,255,255,.3)}
+.orgc-card--root .orgc-card__title{color:#fff}
+.orgc-card--root .orgc-card__ancien{color:rgba(255,255,255,.6)}
+.orgc-card--root .orgc-card__detail{border-top-color:rgba(255,255,255,.15)}
+.orgc-card--root .orgc-card__row{color:rgba(255,255,255,.85)}
+.orgc-card--root .orgc-card__row-label{color:rgba(255,255,255,.5)}
+.orgc-card--root .orgc-card__role{color:rgba(255,255,255,.6)}
+.orgc-card--root .orgc-card__social a{background:rgba(255,255,255,.15);color:rgba(255,255,255,.85)}
+.orgc-card--root .orgc-card__footer{border-top-color:rgba(255,255,255,.15)}
+.orgc-card--root .orgc-card__badge{background:rgba(255,255,255,.15);color:rgba(255,255,255,.8)}
+.orgc-card--root .orgc-card__badge--muted{background:rgba(255,255,255,.1);color:rgba(255,255,255,.5)}
+.orgc-card__title{font-size:.85rem;font-weight:700;color:#161616;line-height:1.3}
+.orgc-card__ancien{font-size:.7rem;color:#666;font-style:italic;margin-top:2px}
+.orgc-card__detail{margin-top:.5rem;padding-top:.5rem;border-top:1px solid #e5e5e5;display:flex;flex-direction:column;gap:3px}
+.orgc-card__row{display:flex;align-items:baseline;gap:6px;font-size:.73rem;color:#3a3a3a;line-height:1.3}
+.orgc-card__row-label{font-size:.65rem;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.04em;min-width:32px;flex-shrink:0}
+.orgc-card__role{font-size:.68rem;color:#666;padding-left:38px}
+.orgc-card__social{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.orgc-card__social a{font-size:.65rem;padding:1px 6px;border-radius:3px;background:#f0f0f0;color:#3a3a3a;text-decoration:none}
+.orgc-card__footer{margin-top:.5rem;padding-top:.375rem;border-top:1px solid #e5e5e5}
+.orgc-card__badge{display:inline-block;font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:.25rem;background:#e3e3fd;color:#000091}
+.orgc-card__badge--muted{background:#f0f0f0;color:#666;font-style:italic;font-weight:400}
+.orgc-card[data-depth="2"]{border-left-color:#5b5bff}
+.orgc-card[data-depth="3"]{border-left-color:#8888dd}
+.orgc-card[data-depth="4"]{border-left-color:#bbbbee;box-shadow:0 1px 3px 0 rgba(0,0,18,.08)}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Marianne',system-ui,-apple-system,sans-serif;background:#f6f6f6;padding:2rem;color:#161616}
+h1{font-size:1.1rem;font-weight:700;text-align:center;margin-bottom:.25rem}
+.meta{text-align:center;font-size:.75rem;color:#666;margin-bottom:2rem}
+${d3c ? '' : htmlCssMode}
+@media print{body{background:#fff;padding:.5rem}svg{max-height:none!important}.orgc-card,.orgc-card--root{print-color-adjust:exact;-webkit-print-color-adjust:exact}.orgc-card--root{border:2px solid #000091}}
+</style>
+</head>
+<body>
+<h1>${title}</h1>
+<p class="meta">Export&eacute; le ${now} &mdash; ${meta}</p>
+${bodyContent}
+</body>
+</html>`;
+
+  dlBlob(html, 'organigramme.html', 'text/html;charset=utf-8');
+}
+
 function doPrint() {
   if (!currentHierarchy) { alert('Générez d\'abord un organigramme.'); return; }
 
   const fmt = document.getElementById('print-format').value;
   const [size, orient] = fmt.split('-'); // "A4-landscape" → ["A4","landscape"]
 
-  // For D3 mode: expand all and set viewBox so SVG scales to page
+  // For D3 mode: set viewBox so SVG scales to page (preserve current collapsed/expanded state)
   if (d3c) {
-    d3c.expandAll().render();
-    // Wait for render to settle, then set viewBox
-    setTimeout(() => {
-      const svg = document.querySelector('#d3-wrap svg');
-      if (svg) {
-        const bbox = svg.getBBox();
-        const pad = 20;
-        svg.setAttribute('viewBox',
-          `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`);
-        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-      }
-      injectPageStyleAndPrint(size, orient);
-    }, 600);
+    const svg = document.querySelector('#d3-wrap svg');
+    if (svg) {
+      const bbox = svg.getBBox();
+      const pad = 20;
+      svg.setAttribute('viewBox',
+        `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`);
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    }
+    injectPageStyleAndPrint(size, orient);
   } else {
     injectPageStyleAndPrint(size, orient);
   }
