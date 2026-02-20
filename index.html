@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr" data-fr-scheme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gouv-orga — Organigrammes ministériels</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.12.1/dist/dsfr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.12.1/dist/utility/utility.min.css">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-org-chart@3/build/d3-org-chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-flextree@2.1.2/build/d3-flextree.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="tt"></div>
+
+<header role="banner" class="fr-header">
+  <div class="fr-header__body">
+    <div class="fr-container">
+      <div class="fr-header__body-row">
+        <div class="fr-header__brand fr-enlarge-link">
+          <div class="fr-header__brand-top">
+            <div class="fr-header__logo">
+              <p class="fr-logo">
+                République<br>Française
+              </p>
+            </div>
+          </div>
+          <div class="fr-header__service">
+            <a href="/" title="Accueil - gouv-orga">
+              <p class="fr-header__service-title">gouv-orga</p>
+            </a>
+             
+            <p class="fr-header__service-tagline"><span class="fr-badge fr-badge--warning fr-badge--sm fr-badge--no-icon">En developpement</span> Organigrammes de l'administration</p>
+          </div>
+        </div>  
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="app-body">
+
+<aside class="sidebar">
+<div class="sidebar-inner">
+
+  <!-- Recherche -->
+  <fieldset class="fr-fieldset" aria-labelledby="search-legend">
+    <legend class="fr-fieldset__legend--regular fr-sr-only" id="search-legend">Entité racine</legend>
+    <div class="fr-fieldset__content">
+      <div class="fr-input-group">
+        <label class="fr-label" for="search-input">
+          Rechercher un organisme
+          <span class="fr-hint-text">Ministère, direction, service…</span>
+        </label>
+        <div class="ac-wrap">
+          <input class="fr-input" type="text" id="search-input" placeholder="Tapez pour rechercher…" autocomplete="off">
+          <div class="ac-dropdown" id="ac-dropdown"></div>
+        </div>
+      </div>
+      <div id="selected-wrap" style="display:none">
+        <div class="selected-chip">
+          <div>
+            <div class="sc-name" id="sel-name"></div>
+            <div class="sc-type" id="sel-type"></div>
+          </div>
+          <button class="sc-clear" onclick="clearSelection()" title="Effacer">&times;</button>
+        </div>
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- Catégories -->
+  <details class="sidebar-disclosure">
+    <summary>Catégories</summary>
+    <fieldset class="fr-fieldset">
+      <div class="fr-fieldset__content">
+        <div class="fr-checkbox-group fr-checkbox-group--sm">
+          <input type="checkbox" id="cat-SI" name="cat-SI" checked>
+          <label class="fr-label" for="cat-SI">Service interministériel (SI)</label>
+        </div>
+        <div class="fr-checkbox-group fr-checkbox-group--sm">
+          <input type="checkbox" id="cat-NA" name="cat-NA">
+          <label class="fr-label" for="cat-NA">National (NA)</label>
+        </div>
+        <div class="fr-checkbox-group fr-checkbox-group--sm">
+          <input type="checkbox" id="cat-RG" name="cat-RG">
+          <label class="fr-label" for="cat-RG">Régional (RG)</label>
+        </div>
+        <div class="fr-checkbox-group fr-checkbox-group--sm">
+          <input type="checkbox" id="cat-DP" name="cat-DP">
+          <label class="fr-label" for="cat-DP">Départemental (DP)</label>
+        </div>
+        <div class="fr-checkbox-group fr-checkbox-group--sm">
+          <input type="checkbox" id="cat-SL" name="cat-SL">
+          <label class="fr-label" for="cat-SL">Service local (SL)</label>
+        </div>
+      </div>
+    </fieldset>
+  </details>
+
+  <!-- Informations affichées -->
+  <details class="sidebar-disclosure">
+    <summary>Informations affichées</summary>
+    <fieldset class="fr-fieldset">
+      <div class="fr-fieldset__content">
+        <div class="fr-checkbox-group fr-checkbox-group--sm">
+          <input type="checkbox" id="show-resp" name="show-resp" checked>
+          <label class="fr-label" for="show-resp">Responsable</label>
+        </div>
+        <div class="fr-checkbox-group fr-checkbox-group--sm">
+          <input type="checkbox" id="show-tel" name="show-tel" checked>
+          <label class="fr-label" for="show-tel">Téléphone</label>
+        </div>
+        <div class="fr-checkbox-group fr-checkbox-group--sm">
+          <input type="checkbox" id="show-addr" name="show-addr">
+          <label class="fr-label" for="show-addr">Adresse</label>
+        </div>
+        <div class="fr-checkbox-group fr-checkbox-group--sm">
+          <input type="checkbox" id="show-contact" name="show-contact">
+          <label class="fr-label" for="show-contact">Formulaire de contact</label>
+        </div>
+        <div class="fr-checkbox-group fr-checkbox-group--sm">
+          <input type="checkbox" id="show-siren" name="show-siren">
+          <label class="fr-label" for="show-siren">SIREN</label>
+        </div>
+        <div class="fr-checkbox-group fr-checkbox-group--sm">
+          <input type="checkbox" id="show-social" name="show-social">
+          <label class="fr-label" for="show-social">Réseaux sociaux</label>
+        </div>
+      </div>
+    </fieldset>
+  </details>
+
+  <!-- Options -->
+  <details class="sidebar-disclosure">
+    <summary>Options</summary>
+    <fieldset class="fr-fieldset">
+      <div class="fr-fieldset__content">
+        <div class="fr-input-group">
+          <label class="fr-label" for="depth">Profondeur max</label>
+          <div class="range-row">
+            <input type="range" id="depth" min="1" max="5" value="3" oninput="document.getElementById('dv').textContent=this.value">
+            <span class="range-val" id="dv">3</span>
+          </div>
+        </div>
+        <div class="fr-input-group">
+          <label class="fr-label" for="threshold">Seuil HTML / D3</label>
+          <div class="range-row">
+            <input type="range" id="threshold" min="10" max="200" step="5" value="40" oninput="document.getElementById('tv').textContent=this.value">
+            <span class="range-val" id="tv">40</span>
+          </div>
+        </div>
+        <div class="fr-select-group">
+          <label class="fr-label" for="layout-mode">Disposition des enfants (D3)</label>
+          <select class="fr-select fr-select--sm" id="layout-mode">
+            <option value="compact" selected>Compact (2 colonnes)</option>
+            <option value="spread">&Eacute;tal&eacute; (horizontal)</option>
+            <option value="column">Colonne unique</option>
+          </select>
+        </div>
+        <div class="fr-select-group">
+          <label class="fr-label" for="layout-dir">Direction du graphe (D3)</label>
+          <select class="fr-select fr-select--sm" id="layout-dir">
+            <option value="top" selected>Haut &rarr; Bas</option>
+            <option value="left">Gauche &rarr; Droite</option>
+            <option value="bottom">Bas &rarr; Haut</option>
+            <option value="right">Droite &rarr; Gauche</option>
+          </select>
+        </div>
+        <div class="fr-select-group">
+          <label class="fr-label" for="print-format">Format d'impression</label>
+          <select class="fr-select fr-select--sm" id="print-format">
+            <option value="A4-landscape" selected>A4 paysage</option>
+            <option value="A4-portrait">A4 portrait</option>
+            <option value="A3-landscape">A3 paysage</option>
+            <option value="A3-portrait">A3 portrait</option>
+          </select>
+        </div>
+      </div>
+    </fieldset>
+  </details>
+
+  <button class="fr-btn" id="gen-btn" onclick="generate()" style="width:100%">
+    Générer l'organigramme
+  </button>
+
+</div>
+</aside>
+
+<main class="main-zone">
+
+  <div class="top-bar" id="top-bar" style="display:none">
+    <p class="fr-badge fr-badge--sm fr-badge--no-icon fr-badge--info" id="sc-nodes">— noeuds</p>
+    <p class="fr-badge fr-badge--sm fr-badge--no-icon fr-badge--info" id="sc-depth">— niveaux</p>
+    <p class="fr-badge fr-badge--sm fr-badge--no-icon" id="sc-mode">—</p>
+    <div class="d3-actions" id="d3-actions" style="display:none">
+      <button class="fr-btn fr-btn--tertiary fr-btn--sm" onclick="d3c&&d3c.expandAll().render()">Déplier tout</button>
+      <button class="fr-btn fr-btn--tertiary fr-btn--sm" onclick="d3c&&d3c.collapseAll().render()">Replier tout</button>
+      <button class="fr-btn fr-btn--tertiary fr-btn--sm" onclick="d3c&&d3c.fit()">Centrer</button>
+    </div>
+  </div>
+
+  <div class="chart-wrap" id="chart-wrap">
+    <div class="empty-state" id="empty-state">
+      <svg width="72" height="60" viewBox="0 0 72 60" fill="none">
+        <circle cx="36" cy="10" r="9" fill="#e0e0e0"/>
+        <circle cx="12" cy="50" r="8" fill="#e8e8e8"/>
+        <circle cx="36" cy="50" r="8" fill="#e8e8e8"/>
+        <circle cx="60" cy="50" r="8" fill="#e8e8e8"/>
+        <line x1="36" y1="19" x2="12" y2="42" stroke="#e8e8e8" stroke-width="2.5"/>
+        <line x1="36" y1="19" x2="36" y2="42" stroke="#e8e8e8" stroke-width="2.5"/>
+        <line x1="36" y1="19" x2="60" y2="42" stroke="#e8e8e8" stroke-width="2.5"/>
+      </svg>
+      <p class="fr-text--lg">Recherchez un organisme et cliquez sur <strong>Générer</strong></p>
+      <p class="fr-hint-text">L'organigramme est construit en suivant les liens hiérarchiques de l'API</p>
+    </div>
+  </div>
+
+  <div class="bottom-bar" id="bottom-bar" style="display:none">
+    <span class="fr-text--sm" style="color:var(--text-mention-grey)">Export :</span>
+    <ul class="fr-btns-group fr-btns-group--sm fr-btns-group--inline">
+      <li><button class="fr-btn fr-btn--secondary fr-btn--sm" onclick="doExport('json')">JSON</button></li>
+      <li><button class="fr-btn fr-btn--secondary fr-btn--sm" onclick="doExport('png')">PNG (D3)</button></li>
+      <li><button class="fr-btn fr-btn--secondary fr-btn--sm" onclick="doExport('svg')">SVG (D3)</button></li>
+      <li><button class="fr-btn fr-btn--secondary fr-btn--sm" onclick="doExport('csv')">CSV</button></li>
+      <li><button class="fr-btn fr-btn--secondary fr-btn--sm" onclick="doPrint()">Imprimer (PDF)</button></li>
+    </ul>
+  </div>
+
+</main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
