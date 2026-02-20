@@ -12,6 +12,9 @@ body {
   margin: 0;
 }
 
+/* ── Source selector ── */
+.sidebar > .sidebar-inner > .fr-select-group:first-child { margin-bottom: .75rem; }
+
 /* ── DSFR overrides ── */
 .fr-header { flex-shrink: 0; }
 .fr-header .fr-container { max-width: 100%; }
@@ -87,6 +90,82 @@ body {
   padding: 0 .75rem .5rem;
   margin: 0;
   border: none;
+}
+
+/* ── Saves panel ── */
+.saves-count {
+  font-size: .65rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  opacity: .7;
+}
+.saves-panel {
+  padding: 0 .75rem .5rem;
+}
+.saves-empty {
+  font-size: .78rem;
+  color: var(--text-mention-grey);
+  padding: .25rem 0;
+}
+.saves-list {
+  display: flex;
+  flex-direction: column;
+  gap: .375rem;
+}
+.save-item {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .375rem .5rem;
+  border: 1px solid var(--border-default-grey);
+  border-radius: .25rem;
+  background: var(--background-raised-grey);
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.save-item:hover {
+  border-color: var(--blue-france-sun-113-625);
+}
+.save-item__info {
+  flex: 1;
+  min-width: 0;
+}
+.save-item__name {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-title-grey);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.save-item__meta {
+  font-size: .65rem;
+  color: var(--text-mention-grey);
+}
+.save-item__actions {
+  display: flex;
+  gap: .25rem;
+  flex-shrink: 0;
+}
+.save-item__btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: .75rem;
+  padding: 2px 4px;
+  border-radius: .125rem;
+  color: var(--text-mention-grey);
+  transition: color .1s;
+}
+.save-item__btn:hover { color: var(--text-action-high-blue-france); }
+.save-item__btn--delete:hover { color: var(--error-425-625); }
+
+.bottom-sep {
+  width: 1px;
+  height: 1.25rem;
+  background: var(--border-default-grey);
+  flex-shrink: 0;
 }
 
 /* ── Layout ── */
@@ -194,6 +273,15 @@ body {
   min-height: 40px;
 }
 .d3-actions { display: flex; gap: .375rem; margin-left: auto; }
+.node-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: .375rem;
+  padding: .375rem 1rem;
+  background: var(--background-contrast-info);
+  border-bottom: 1px solid var(--border-default-grey);
+  flex-shrink: 0;
+}
 
 .chart-wrap { flex: 1; overflow: auto; padding: 1.25rem; position: relative; }
 
@@ -388,6 +476,70 @@ body {
   font-size: .82rem;
 }
 
+/* ── Node modal ── */
+.node-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,18,.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.node-modal {
+  background: #fff;
+  border-radius: .5rem;
+  box-shadow: 0 12px 40px rgba(0,0,18,.25);
+  width: 520px;
+  max-width: 94vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+.node-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-default-grey);
+}
+.node-modal__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-title-grey);
+}
+.node-modal__close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--text-mention-grey);
+  line-height: 1;
+  padding: 0 4px;
+}
+.node-modal__close:hover { color: var(--text-title-grey); }
+.node-modal__body {
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+.node-modal__body .fr-input-group { margin-bottom: .5rem; }
+.node-modal__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+}
+.node-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  padding: .75rem 1.25rem;
+  border-top: 1px solid var(--border-default-grey);
+}
+
 /* ── Responsive ── */
 @media (max-width: 800px) {
   .app-body { flex-direction: column; }
@@ -401,6 +553,7 @@ body {
   .fr-header,
   .sidebar,
   .top-bar,
+  .node-actions,
   .bottom-bar,
   #tt {
     display: none !important;
@@ -442,6 +595,22 @@ body {
   #d3-wrap svg {
     width: 100% !important;
     height: 100% !important;
+  }
+
+  /* Force background colors in print (cards, badges) */
+  .orgc-card,
+  .orgc-card--root {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .orgc-card--root {
+    border: 2px solid #000091;
+  }
+
+  /* D3 mode: force backgrounds inside foreignObject */
+  #d3-wrap foreignObject div {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   /* Disable hover effects */
