@@ -155,8 +155,8 @@ async function fetchSuggestions(query) {
   acDropdown.style.display = 'block';
 
   try {
-    const where = `${buildCatWhere()} AND suggest(nom,"${query}")`;
-    const url = `${API}?where=${encodeURIComponent(where)}&limit=10&select=${encodeURIComponent('nom,id,type_organisme,hierarchie')}`;
+    const where = `${buildCatWhere()} AND (suggest(nom,"${query}") OR search(affectation_personne,"${query}"))`;
+    const url = `${API}?where=${encodeURIComponent(where)}&limit=10&select=${encodeURIComponent('nom,id,type_organisme,hierarchie,affectation_personne')}`;
     const res = await fetch(url, { signal: acAbort.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
@@ -170,9 +170,12 @@ async function fetchSuggestions(query) {
     acDropdown.innerHTML = results.map(r => {
       const childCount = getChildIds(r.hierarchie).length;
       const childLabel = childCount > 0 ? `${childCount} sous-entité${childCount > 1 ? 's' : ''}` : 'aucune sous-entité';
+      const resp = parseResponsable(r.affectation_personne);
+      const respHtml = resp ? `<div class="ac-resp">${esc(resp.nom)}${resp.role ? ' — ' + esc(resp.role) : ''}</div>` : '';
       return `<div class="ac-item" data-id="${esc(r.id)}" data-nom="${esc(r.nom)}" data-type="${esc(r.type_organisme || '')}">
         <div class="ac-name">${esc(r.nom)}</div>
         <div class="ac-type">${esc(r.type_organisme || '')}</div>
+        ${respHtml}
         <div class="ac-children">${childLabel}</div>
       </div>`;
     }).join('');

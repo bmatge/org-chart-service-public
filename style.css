@@ -226,6 +226,7 @@ body {
 .ac-item:hover { background: var(--background-contrast-info); }
 .ac-item .ac-name { font-size: .82rem; font-weight: 600; color: var(--text-title-grey); }
 .ac-item .ac-type { font-size: .7rem; color: var(--text-mention-grey); margin-top: 1px; }
+.ac-item .ac-resp { font-size: .7rem; color: var(--text-default-grey); margin-top: 1px; font-style: italic; }
 .ac-item .ac-children { font-size: .65rem; color: var(--text-mention-grey); margin-top: 1px; }
 .ac-loading,
 .ac-empty { padding: .75rem; text-align: center; color: var(--text-mention-grey); font-size: .8rem; }
